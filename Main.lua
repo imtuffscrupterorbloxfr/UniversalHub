@@ -1,196 +1,90 @@
-local player = game.Players.LocalPlayer
 
-local function getCharacter()
-	return player.Character or player.CharacterAdded:Wait()
+local event = Instance.new("RemoteEvent")
+event.Name = "DevAbilityEvent"
+event.Parent = game.ReplicatedStorage
+
+local DEV_ID = 123456789 -- PUT YOUR USERID HERE
+
+local invinciblePlayers = {}
+local noclipPlayers = {}
+
+local function isDev(player)
+	return player.UserId == DEV_ID
 end
 
-local function getHumanoid()
-	return getCharacter():WaitForChild("Humanoid")
-end
+event.OnServerEvent:Connect(function(player, action)
 
-local function getHRP()
-	return getCharacter():WaitForChild("HumanoidRootPart")
-end
-
--- GUI
-local gui = Instance.new("ScreenGui")
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
-
--- Toggle Button
-local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0,120,0,35)
-toggleButton.Position = UDim2.new(0,20,0,20)
-toggleButton.Text = "Open Hub"
-toggleButton.BackgroundColor3 = Color3.fromRGB(40,40,40)
-toggleButton.TextColor3 = Color3.new(1,1,1)
-toggleButton.Parent = gui
-Instance.new("UICorner", toggleButton)
-
--- Main Frame
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,320,0,420)
-frame.Position = UDim2.new(0.5,-160,0.5,-210)
-frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-frame.Visible = false
-frame.Active = true
-frame.Draggable = true
-frame.Parent = gui
-Instance.new("UICorner", frame)
-
-toggleButton.MouseButton1Click:Connect(function()
-	frame.Visible = not frame.Visible
-	toggleButton.Text = frame.Visible and "Close Hub" or "Open Hub"
-end)
-
--- Title
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1,0,0,40)
-title.BackgroundTransparency = 1
-title.Text = "Universal Hub"
-title.TextColor3 = Color3.new(1,1,1)
-title.TextScaled = true
-title.Parent = frame
-
--- Button Creator
-local function createButton(text, y)
-	local b = Instance.new("TextButton")
-	b.Size = UDim2.new(0.8,0,0,40)
-	b.Position = UDim2.new(0.1,0,0,y)
-	b.Text = text
-	b.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	b.TextColor3 = Color3.new(1,1,1)
-	b.Parent = frame
-	Instance.new("UICorner", b)
-	return b
-end
-
--- TextBox Creator
-local function createBox(placeholder, y)
-	local box = Instance.new("TextBox")
-	box.Size = UDim2.new(0.8,0,0,35)
-	box.Position = UDim2.new(0.1,0,0,y)
-	box.PlaceholderText = placeholder
-	box.Text = ""
-	box.BackgroundColor3 = Color3.fromRGB(45,45,45)
-	box.TextColor3 = Color3.new(1,1,1)
-	box.Parent = frame
-	Instance.new("UICorner", box)
-	return box
-end
-
--- CUSTOM SPEED
-local speedBox = createBox("Enter Speed (Default 16)", 60)
-local speedBtn = createButton("Set Speed", 100)
-
-speedBtn.MouseButton1Click:Connect(function()
-	local num = tonumber(speedBox.Text)
-	if num then
-		getHumanoid().WalkSpeed = num
+	if not isDev(player) then
+		player:Kick("Unauthorized dev ability usage.")
+		return
 	end
-end)
 
--- CUSTOM JUMP
-local jumpBox = createBox("Enter Jump (Default 50)", 150)
-local jumpBtn = createButton("Set Jump", 190)
+	local char = player.Character
+	if not char then return end
+	local hum = char:FindFirstChild("Humanoid")
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hum or not hrp then return end
 
-jumpBtn.MouseButton1Click:Connect(function()
-	local num = tonumber(jumpBox.Text)
-	if num then
-		getHumanoid().JumpPower = num
-	end
-end)
-
--- FLY
-local flying = false
-local flyBtn = createButton("Fly: OFF", 240)
-local bodyVelocity
-local bodyGyro
-
-flyBtn.MouseButton1Click:Connect(function()
-	flying = not flying
-	flyBtn.Text = flying and "Fly: ON" or "Fly: OFF"
-
-	local hrp = getHRP()
-
-	if flying then
-		bodyVelocity = Instance.new("BodyVelocity")
-		bodyVelocity.MaxForce = Vector3.new(1e5,1e5,1e5)
-		bodyVelocity.Velocity = Vector3.new(0,0,0)
-		bodyVelocity.Parent = hrp
-
-		bodyGyro = Instance.new("BodyGyro")
-		bodyGyro.MaxTorque = Vector3.new(1e5,1e5,1e5)
-		bodyGyro.CFrame = hrp.CFrame
-		bodyGyro.Parent = hrp
-
-		game:GetService("RunService").RenderStepped:Connect(function()
-			if flying and bodyVelocity then
-				bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * 60
-				bodyGyro.CFrame = workspace.CurrentCamera.CFrame
-			end
+	-- SPEED BOOST
+	if action == "SPEED" then
+		hum.WalkSpeed = 50
+		task.delay(5, function()
+			if hum then hum.WalkSpeed = 16 end
 		end)
-	else
-		if bodyVelocity then bodyVelocity:Destroy() end
-		if bodyGyro then bodyGyro:Destroy() end
 	end
-end)
 
--- AUTO ATTACK
-local attacking = false
-local attackBtn = createButton("AutoAttack: OFF", 300)
+	-- GOD MODE
+	if action == "GOD" then
+		invinciblePlayers[player] = not invinciblePlayers[player]
+	end
 
-attackBtn.MouseButton1Click:Connect(function()
-	attacking = not attacking
-	attackBtn.Text = attacking and "AutoAttack: ON" or "AutoAttack: OFF"
+	-- NOCLIP
+	if action == "NOCLIP" then
+		noclipPlayers[player] = not noclipPlayers[player]
+	end
 
-	if attacking then
-		task.spawn(function()
-			while attacking do
-				task.wait(0.4)
+	-- SUPER SLAM
+	if action == "SLAM" then
+		hrp.Velocity = Vector3.new(0,100,0)
+		task.wait(0.6)
+		hrp.Velocity = Vector3.new(0,-200,0)
+		task.wait(0.3)
 
-				local char = getCharacter()
-				local humanoid = getHumanoid()
-				local hrp = getHRP()
-
-				-- Auto Equip Tool
-				local tool = char:FindFirstChildOfClass("Tool")
-				if not tool then
-					for _, item in pairs(player.Backpack:GetChildren()) do
-						if item:IsA("Tool") then
-							tool = item
-							humanoid:EquipTool(tool)
-							break
-						end
-					end
-				end
-
-				if tool then
-					tool:Activate()
-				end
-
-				-- Move to closest NPC
-				if workspace:FindFirstChild("NPCs") then
-					local closest
-					local shortest = math.huge
-
-					for _, npc in pairs(workspace.NPCs:GetChildren()) do
-						if npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") then
-							if npc.Humanoid.Health > 0 then
-								local dist = (hrp.Position - npc.HumanoidRootPart.Position).Magnitude
-								if dist < shortest then
-									shortest = dist
-									closest = npc
-								end
-							end
-						end
-					end
-
-					if closest then
-						humanoid:MoveTo(closest.HumanoidRootPart.Position)
+		for _, npc in pairs(workspace:GetDescendants()) do
+			if npc:IsA("Model") and npc ~= char then
+				local nh = npc:FindFirstChild("Humanoid")
+				local root = npc:FindFirstChild("HumanoidRootPart")
+				if nh and root and nh.Health > 0 then
+					if (hrp.Position - root.Position).Magnitude < 20 then
+						nh:TakeDamage(50)
 					end
 				end
 			end
-		end)
+		end
+	end
+end)
+
+-- GODMODE LOOP
+game:GetService("RunService").Heartbeat:Connect(function()
+	for player,_ in pairs(invinciblePlayers) do
+		if player.Character then
+			local hum = player.Character:FindFirstChild("Humanoid")
+			if hum then
+				hum.Health = hum.MaxHealth
+			end
+		end
+	end
+end)
+
+-- NOCLIP LOOP
+game:GetService("RunService").Stepped:Connect(function()
+	for player,_ in pairs(noclipPlayers) do
+		if player.Character then
+			for _, part in pairs(player.Character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+		end
 	end
 end)
