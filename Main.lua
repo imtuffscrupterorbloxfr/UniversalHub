@@ -1,4 +1,96 @@
--- AMARKINGS UI: UPGRADED SURGERY EDITION
+-- AMARKINGS Anti-Cheat (Server-Side)
+-- Place in ServerScriptService
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+-- SETTINGS
+local MAX_WALKSPEED = 20
+local MAX_JUMPPOWER = 60
+local MAX_TELEPORT_DISTANCE = 100 -- studs per check
+local CHECK_INTERVAL = 1
+
+-- Store last positions
+local playerData = {}
+
+local function setupPlayer(player)
+	player.CharacterAdded:Connect(function(character)
+
+		local humanoid = character:WaitForChild("Humanoid")
+		local hrp = character:WaitForChild("HumanoidRootPart")
+
+		playerData[player] = {
+			LastPosition = hrp.Position
+		}
+
+		-- Detect WalkSpeed changes
+		humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+			if humanoid.WalkSpeed > MAX_WALKSPEED then
+				warn(player.Name .. " tried to change WalkSpeed.")
+				humanoid.WalkSpeed = 16
+			end
+		end)
+
+		-- Detect JumpPower changes
+		humanoid:GetPropertyChangedSignal("JumpPower"):Connect(function()
+			if humanoid.JumpPower > MAX_JUMPPOWER then
+				warn(player.Name .. " tried to change JumpPower.")
+				humanoid.JumpPower = 50
+			end
+		end)
+
+		-- Detect health tampering
+		humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+			if humanoid.Health > humanoid.MaxHealth then
+				warn(player.Name .. " tried to modify health.")
+				humanoid.Health = humanoid.MaxHealth
+			end
+		end)
+
+		-- Detect BodyMovers (fly hacks)
+		RunService.Heartbeat:Connect(function()
+			if character:FindFirstChildOfClass("BodyVelocity") or
+			   character:FindFirstChildOfClass("BodyGyro") then
+				warn(player.Name .. " possible fly exploit detected.")
+				player:Kick("Fly exploits are not allowed.")
+			end
+		end)
+	end)
+end
+
+-- Teleport check loop
+task.spawn(function()
+	while true do
+		task.wait(CHECK_INTERVAL)
+
+		for _, player in pairs(Players:GetPlayers()) do
+			local character = player.Character
+			if character and character:FindFirstChild("HumanoidRootPart") then
+
+				local hrp = character.HumanoidRootPart
+				local data = playerData[player]
+
+				if data then
+					local distance = (hrp.Position - data.LastPosition).Magnitude
+
+					if distance > MAX_TELEPORT_DISTANCE then
+						warn(player.Name .. " teleported too far.")
+						player:Kick("Teleport exploit detected.")
+					end
+
+					data.LastPosition = hrp.Position
+				end
+			end
+		end
+	end
+end)
+
+Players.PlayerAdded:Connect(setupPlayer)
+
+Players.PlayerRemoving:Connect(function(player)
+	playerData[player] = nil
+end)
+  -- AMARKINGS UI: UPGRADED SURGERY EDITION
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
