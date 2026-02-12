@@ -1,4 +1,59 @@
+local player = game.Players.LocalPlayer
 local event = game.ReplicatedStorage:WaitForChild("HubEvent")
+
+local gui = Instance.new("ScreenGui")
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 250)
+frame.Position = UDim2.new(0.5, -150, 0.5, -125)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Parent = gui
+
+Instance.new("UICorner", frame)
+
+local function createButton(text, y)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0.8,0,0,40)
+    b.Position = UDim2.new(0.1,0,0,y)
+    b.Text = text
+    b.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Parent = frame
+    Instance.new("UICorner", b)
+    return b
+end
+
+-- SPEED
+local speed = false
+local speedBtn = createButton("Speed: OFF", 50)
+
+speedBtn.MouseButton1Click:Connect(function()
+    speed = not speed
+    speedBtn.Text = speed and "Speed: ON" or "Speed: OFF"
+    event:FireServer("Speed", speed)
+end)
+
+-- JUMP
+local jump = false
+local jumpBtn = createButton("Jump: OFF", 110)
+
+jumpBtn.MouseButton1Click:Connect(function()
+    jump = not jump
+    jumpBtn.Text = jump and "Jump: ON" or "Jump: OFF"
+    event:FireServer("Jump", jump)
+end)
+
+-- AUTOFARM
+local farm = false
+local farmBtn = createButton("Autofarm: OFF", 170)
+
+farmBtn.MouseButton1Click:Connect(function()
+    farm = not farm
+    farmBtn.Text = farm and "Autofarm: ON" or "Autofarm: OFF"
+    event:FireServer("Farm", farm)
+end) local event = game.ReplicatedStorage:WaitForChild("HubEvent")
 
 local farmingPlayers = {}
 
