@@ -1,289 +1,240 @@
--- AMARKINGS ADMIN UI (LOCAL SCRIPT)
-
+-- AMARKINGS UI: UPGRADED SURGERY EDITION
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-
 local player = Players.LocalPlayer
 
---------------------------------------------------
--- 🔐 ADMIN KEY SETTINGS
---------------------------------------------------
+-- Key system
+local KEY = "amarkings123"
 
-local ADMIN_KEY = "AMARKINGS-ADMIN-2026" -- CHANGE THIS
-local hasAccess = false
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.Name = "AmarkingsKey"
 
---------------------------------------------------
--- CHARACTER FUNCTIONS
---------------------------------------------------
+local keyBox = Instance.new("TextBox", screenGui)
+keyBox.Size = UDim2.new(0,200,0,40)
+keyBox.Position = UDim2.new(0.5,-100,0.5,-20)
+keyBox.PlaceholderText = "Enter Admin Key"
+keyBox.TextScaled = true
 
-local function getChar()
-	return player.Character or player.CharacterAdded:Wait()
-end
+local submitBtn = Instance.new("TextButton", screenGui)
+submitBtn.Size = UDim2.new(0,200,0,40)
+submitBtn.Position = UDim2.new(0.5,-100,0.5,30)
+submitBtn.Text = "Submit"
+submitBtn.TextScaled = true
 
-local function getHum()
-	return getChar():WaitForChild("Humanoid")
-end
+submitBtn.MouseButton1Click:Connect(function()
+	if keyBox.Text == KEY then
+		screenGui:Destroy()
+	else
+		keyBox.Text = ""
+		keyBox.PlaceholderText = "Wrong Key!"
+	end
+end)
 
-local function getHRP()
-	return getChar():WaitForChild("HumanoidRootPart")
-end
-
---------------------------------------------------
--- UI
---------------------------------------------------
-
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+-- Main GUI
+local gui = Instance.new("ScreenGui")
+gui.Parent = player:WaitForChild("PlayerGui")
 gui.Name = "AmarkingsUI"
+gui.ResetOnSpawn = false
 
+-- Menu Icon
+local iconBtn = Instance.new("ImageButton", gui)
+iconBtn.Size = UDim2.new(0,50,0,50)
+iconBtn.Position = UDim2.new(0,20,0,20)
+iconBtn.Image = "rbxassetid://6031075938"
+iconBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+Instance.new("UICorner", iconBtn)
+
+-- Box Menu
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,300,0,520)
-frame.Position = UDim2.new(0.5,-150,0.5,-260)
-frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+frame.Size = UDim2.new(0,250,0,400)
+frame.Position = UDim2.new(0,20,0,80)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+frame.Visible = false
 frame.Active = true
 frame.Draggable = true
 Instance.new("UICorner", frame)
 
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1,0,0,40)
-title.BackgroundTransparency = 1
-title.Text = "AMARKINGS ADMIN PANEL"
-title.TextColor3 = Color3.fromRGB(0,255,150)
-title.Font = Enum.Font.GothamBold
-title.TextScaled = true
-
---------------------------------------------------
--- 🔐 KEY SYSTEM UI
---------------------------------------------------
-
-local keyBox = Instance.new("TextBox", frame)
-keyBox.Size = UDim2.new(1,-20,0,40)
-keyBox.Position = UDim2.new(0,10,0,60)
-keyBox.PlaceholderText = "Enter Admin Key..."
-keyBox.Text = ""
-keyBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
-keyBox.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", keyBox)
-
-local keyBtn = Instance.new("TextButton", frame)
-keyBtn.Size = UDim2.new(1,-20,0,40)
-keyBtn.Position = UDim2.new(0,10,0,110)
-keyBtn.Text = "Unlock"
-keyBtn.BackgroundColor3 = Color3.fromRGB(0,120,255)
-keyBtn.TextColor3 = Color3.new(1,1,1)
-keyBtn.Font = Enum.Font.GothamBold
-keyBtn.TextScaled = true
-Instance.new("UICorner", keyBtn)
-
---------------------------------------------------
--- FEATURE BUTTON MAKER
---------------------------------------------------
-
-local function makeButton(text,y)
-	local btn = Instance.new("TextButton", frame)
-	btn.Size = UDim2.new(1,-20,0,40)
-	btn.Position = UDim2.new(0,10,0,y)
-	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	btn.TextColor3 = Color3.new(1,1,1)
-	btn.Font = Enum.Font.GothamBold
-	btn.TextScaled = true
-	btn.Text = text
-	btn.Visible = false
-	Instance.new("UICorner", btn)
-	return btn
-end
-
-local function makeBox(placeholder,y)
-	local box = Instance.new("TextBox", frame)
-	box.Size = UDim2.new(1,-20,0,35)
-	box.Position = UDim2.new(0,10,0,y)
-	box.PlaceholderText = placeholder
-	box.Text = ""
-	box.BackgroundColor3 = Color3.fromRGB(40,40,40)
-	box.TextColor3 = Color3.new(1,1,1)
-	box.Visible = false
-	Instance.new("UICorner", box)
-	return box
-end
-
---------------------------------------------------
--- FEATURES (LOCKED BY DEFAULT)
---------------------------------------------------
-
-local flyBtn = makeButton("Fly: OFF",170)
-local speedBtn = makeButton("Speed: OFF",220)
-local godBtn = makeButton("Godmode: OFF",270)
-local tpBtn = makeButton("Click TP: OFF",320)
-local hpBtn = makeButton("Show NPC HP: OFF",370)
-local targetBox = makeBox("Enter NPC Name",420)
-local autoFightBtn = makeButton("Auto-Fight: OFF",460)
-
---------------------------------------------------
--- 🔓 UNLOCK FUNCTION
---------------------------------------------------
-
-local function unlockFeatures()
-	hasAccess = true
-	keyBox.Visible = false
-	keyBtn.Visible = false
-
-	flyBtn.Visible = true
-	speedBtn.Visible = true
-	godBtn.Visible = true
-	tpBtn.Visible = true
-	hpBtn.Visible = true
-	targetBox.Visible = true
-	autoFightBtn.Visible = true
-end
-
-keyBtn.MouseButton1Click:Connect(function()
-	if keyBox.Text == ADMIN_KEY then
-		keyBtn.Text = "ACCESS GRANTED"
-		keyBtn.BackgroundColor3 = Color3.fromRGB(0,200,100)
-		unlockFeatures()
-	else
-		keyBtn.Text = "WRONG KEY"
-		keyBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
-	end
+iconBtn.MouseButton1Click:Connect(function()
+	frame.Visible = not frame.Visible
 end)
 
---------------------------------------------------
--- FLY
---------------------------------------------------
+-- Title
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1,0,0,35)
+title.Position = UDim2.new(0,0,0,0)
+title.BackgroundTransparency = 1
+title.Text = "AMARKINGS UI"
+title.TextColor3 = Color3.fromRGB(0,255,150)
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
 
-local flying = false
-local bv
+-- Helpers
+local function getChar() return player.Character or player.CharacterAdded:Wait() end
+local function getHum() return getChar():WaitForChild("Humanoid") end
+local function getHRP() return getChar():WaitForChild("HumanoidRootPart") end
 
+local function makeButton(text,pos)
+	local b = Instance.new("TextButton", frame)
+	b.Size = UDim2.new(0.9,0,0,35)
+	b.Position = UDim2.new(0.05,0,0,pos)
+	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	b.TextColor3 = Color3.fromRGB(255,255,255)
+	b.TextScaled = true
+	b.Text = text
+	Instance.new("UICorner", b)
+	return b
+end
+
+local function makeBox(placeholder,pos)
+	local b = Instance.new("TextBox", frame)
+	b.Size = UDim2.new(0.9,0,0,30)
+	b.Position = UDim2.new(0.05,0,0,pos)
+	b.PlaceholderText = placeholder
+	b.Text = ""
+	b.TextScaled = true
+	b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	Instance.new("UICorner", b)
+	return b
+end
+
+-- FEATURE VARIABLES
+local y=40
+local flyBtn = makeButton("Fly: OFF",y); y=y+40
+local speedBox = makeBox("WalkSpeed (Default 16)",y); y=y+35
+local speedBtn = makeButton("Set Speed",y); y=y+40
+local godBtn = makeButton("Godmode: OFF",y); y=y+40
+local tpBtn = makeButton("Click TP: OFF",y); y=y+40
+local jumpBox = makeBox("JumpPower (Default 50)",y); y=y+35
+local jumpBtn = makeButton("Set Jump",y); y=y+40
+local npcBox = makeBox("NPC Name for Auto-Fight",y); y=y+35
+local autoFightBtn = makeButton("Auto-Fight: OFF",y); y=y+40
+local itemBox = makeBox("Item Name",y); y=y+35
+local itemBtn = makeButton("Find Item",y); y=y+40
+
+-- Fly Logic (only when moving)
+local flying=false
+local bv, bg
 flyBtn.MouseButton1Click:Connect(function()
-	if not hasAccess then return end
 	flying = not flying
 	flyBtn.Text = flying and "Fly: ON" or "Fly: OFF"
-
 	local hrp = getHRP()
-
 	if flying then
-		bv = Instance.new("BodyVelocity", hrp)
+		bv = Instance.new("BodyVelocity",hrp)
 		bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-
+		bv.Velocity = Vector3.new(0,0,0)
+		bg = Instance.new("BodyGyro",hrp)
+		bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
+		bg.CFrame = hrp.CFrame
 		RunService.RenderStepped:Connect(function()
-			if flying and bv then
-				bv.Velocity = workspace.CurrentCamera.CFrame.LookVector * 60
+			if flying then
+				local move = Vector3.new(0,0,0)
+				if UserInputService:IsKeyDown(Enum.KeyCode.W) then move = move + workspace.CurrentCamera.CFrame.LookVector end
+				if UserInputService:IsKeyDown(Enum.KeyCode.S) then move = move - workspace.CurrentCamera.CFrame.LookVector end
+				if UserInputService:IsKeyDown(Enum.KeyCode.A) then move = move - workspace.CurrentCamera.CFrame.RightVector end
+				if UserInputService:IsKeyDown(Enum.KeyCode.D) then move = move + workspace.CurrentCamera.CFrame.RightVector end
+				bv.Velocity = move*60
+				bg.CFrame = workspace.CurrentCamera.CFrame
 			end
 		end)
 	else
 		if bv then bv:Destroy() end
+		if bg then bg:Destroy() end
 	end
 end)
 
---------------------------------------------------
--- SPEED
---------------------------------------------------
-
-local speedOn = false
+-- Speed
 speedBtn.MouseButton1Click:Connect(function()
-	if not hasAccess then return end
-	speedOn = not speedOn
-	speedBtn.Text = speedOn and "Speed: ON" or "Speed: OFF"
-	getHum().WalkSpeed = speedOn and 40 or 16
+	local num=tonumber(speedBox.Text)
+	if num then getHum().WalkSpeed=num end
 end)
 
---------------------------------------------------
--- GODMODE
---------------------------------------------------
-
-local godOn = false
+-- Godmode
+local godOn=false
 godBtn.MouseButton1Click:Connect(function()
-	if not hasAccess then return end
 	godOn = not godOn
 	godBtn.Text = godOn and "Godmode: ON" or "Godmode: OFF"
 end)
-
 RunService.Heartbeat:Connect(function()
-	if godOn and hasAccess then
+	if godOn then
 		local hum = getHum()
-		if hum then hum.Health = hum.MaxHealth end
+		if hum then hum.Health=hum.MaxHealth end
 	end
 end)
 
---------------------------------------------------
--- CLICK TP
---------------------------------------------------
-
-local tpOn = false
+-- Click TP
+local tpOn=false
 tpBtn.MouseButton1Click:Connect(function()
-	if not hasAccess then return end
 	tpOn = not tpOn
 	tpBtn.Text = tpOn and "Click TP: ON" or "Click TP: OFF"
 end)
-
 UserInputService.InputBegan:Connect(function(input,gp)
-	if gp then return end
-	if tpOn and hasAccess and input.UserInputType == Enum.UserInputType.MouseButton1 then
-		local mouse = player:GetMouse()
-		if mouse.Hit then
-			getChar():MoveTo(mouse.Hit.Position)
-		end
+	if tpOn and input.UserInputType==Enum.UserInputType.MouseButton1 and not gp then
+		local mouse=player:GetMouse()
+		if mouse.Hit then getChar():MoveTo(mouse.Hit.Position) end
 	end
 end)
 
---------------------------------------------------
--- AUTO FIGHT
---------------------------------------------------
+-- JumpPower
+jumpBtn.MouseButton1Click:Connect(function()
+	local num=tonumber(jumpBox.Text)
+	if num then getHum().JumpPower=num end
+end)
 
-local fighting = false
-
+-- Auto-Fight
+local fighting=false
 autoFightBtn.MouseButton1Click:Connect(function()
-	if not hasAccess then return end
 	fighting = not fighting
-	autoFightBtn.Text = fighting and "Auto-Fight: ON" or "Auto-Fight: OFF"
-
+	autoFightBtn.Text = fighting and "Auto-Fight: ON" or "OFF"
 	if fighting then
 		task.spawn(function()
-			while fighting and hasAccess do
+			while fighting do
 				task.wait(0.3)
-
-				local hrp = getHRP()
-				local hum = getHum()
-
-				local tool = getChar():FindFirstChildOfClass("Tool")
+				local hrp=getHRP()
+				local tool=getChar():FindFirstChildOfClass("Tool")
 				if not tool then
-					for _, t in pairs(player.Backpack:GetChildren()) do
+					for _,t in pairs(player.Backpack:GetChildren()) do
 						if t:IsA("Tool") then
-							hum:EquipTool(t)
-							tool = t
+							getHum():EquipTool(t)
+							tool=t
 							break
 						end
 					end
 				end
-
-				local closest
-				local shortest = math.huge
-
-				for _, npc in pairs(workspace:GetDescendants()) do
-					if npc:IsA("Model") and npc ~= getChar() and npc.Name:lower():find(targetBox.Text:lower()) then
-						local nh = npc:FindFirstChild("Humanoid")
-						local nhrp = npc:FindFirstChild("HumanoidRootPart")
-						if nh and nhrp and nh.Health > 0 then
-							local dist = (hrp.Position - nhrp.Position).Magnitude
-							if dist < shortest then
-								shortest = dist
-								closest = npc
-							end
+				local closest=nil
+				local shortest=math.huge
+				for _,npc in pairs(workspace:GetDescendants()) do
+					if npc:IsA("Model") and npc~=getChar() and npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") then
+						if npc.Name:lower():find(npcBox.Text:lower()) then
+							local dist=(hrp.Position-npc.HumanoidRootPart.Position).Magnitude
+							if dist<shortest then shortest=dist closest=npc end
 						end
 					end
 				end
-
 				if closest then
-					local nhrp = closest:FindFirstChild("HumanoidRootPart")
-					if nhrp then
-						hrp.CFrame = nhrp.CFrame * CFrame.new(0,0,-3)
-					end
-					if tool then
-						tool:Activate()
-					end
+					hrp.CFrame=closest.HumanoidRootPart.CFrame*CFrame.new(0,0,-3)
+					if tool then tool:Activate() end
 				end
 			end
 		end)
+	end
+end)
+
+-- Item Finder
+itemBtn.MouseButton1Click:Connect(function()
+	local name=itemBox.Text:lower()
+	local found=nil
+	for _,obj in pairs(workspace:GetDescendants()) do
+		if (obj:IsA("Tool") or obj:IsA("Part") or obj:IsA("Model")) and obj.Name:lower():find(name) then
+			found=obj break
+		end
+	end
+	if found then
+		local hrp=getHRP()
+		hrp.CFrame=found:IsA("Model") and found:GetPrimaryPartCFrame() or found.CFrame+Vector3.new(0,3,0)
+		print("Teleported to item:",found.Name)
+	else
+		print("Item not found")
 	end
 end)
