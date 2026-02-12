@@ -1,6 +1,43 @@
 -- AMARKINGS Anti-Cheat (Server-Side)
 -- Place in ServerScriptService
+-- Auto Block
+local autoBlock = false
+local blockBtn = makeButton("Auto Block: OFF", y); y = y + 40
 
+local BLOCK_KEY = Enum.KeyCode.F -- change if game uses different key
+local lastHealth = 0
+local blockCooldown = false
+
+blockBtn.MouseButton1Click:Connect(function()
+	autoBlock = not autoBlock
+	blockBtn.Text = autoBlock and "Auto Block: ON" or "Auto Block: OFF"
+end)
+
+-- Detect damage
+RunService.Heartbeat:Connect(function()
+	if autoBlock then
+		local hum = getHum()
+		if hum then
+			if lastHealth == 0 then
+				lastHealth = hum.Health
+			end
+			
+			if hum.Health < lastHealth and not blockCooldown then
+				blockCooldown = true
+				
+				-- Simulate block key press
+				game:GetService("VirtualInputManager"):SendKeyEvent(true, BLOCK_KEY, false, game)
+				task.wait(0.15)
+				game:GetService("VirtualInputManager"):SendKeyEvent(false, BLOCK_KEY, false, game)
+				
+				task.wait(0.5)
+				blockCooldown = false
+			end
+			
+			lastHealth = hum.Health
+		end
+	end
+end)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
